@@ -1,9 +1,7 @@
-import torch
 from torch import nn
-from torch.utils.data import DataLoader
-from torchvision import datasets
-from torchvision.transforms import ToTensor
-class signal_detection_nn(nn.Module):
+class SignalDetectionNN(nn.Module):
+    """Signal Detection neural net
+    """
     def __init__(self):
         super().__init__()
         self.linear_relu_stack = nn.Sequential(
@@ -13,5 +11,13 @@ class signal_detection_nn(nn.Module):
         )
 
     def forward(self, x):
+        """Forward pass through the network.
+    
+        Args:
+            x (torch.Tensor): Input tensor.
+            
+        Returns:
+            torch.Tensor: Network output.
+        """
         logits = self.linear_relu_stack(x)
         return logits

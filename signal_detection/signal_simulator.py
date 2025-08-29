@@ -1,12 +1,12 @@
 import sys
 import time
+import torch
 import numpy as np
+import pyqtgraph as pg
+from pyqtgraph.Qt import QtCore
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QSlider
 from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot
-from pyqtgraph.Qt import QtCore
-import pyqtgraph as pg
-import torch
-from signaldetection_model import signal_detection_nn
+from signaldetection_model import SignalDetectionNN
 import common_functions as cf
 # -----------------------
 # Background worker thread
@@ -41,7 +41,7 @@ class DataWorker(QThread):
         super().__init__(parent)
         self.device = torch.accelerator.current_accelerator().type if torch.accelerator.is_available() else "cpu"
         print(f"Using {self.device} device")
-        self.model = signal_detection_nn().to(self.device)
+        self.model = SignalDetectionNN().to(self.device)
         self.model.load_state_dict(torch.load(cf.get_model_path(), weights_only=True))
         print(self.model)
         self.model.eval() # set to eval mode.
@@ -67,7 +67,7 @@ class DataWorker(QThread):
                 is_signal_found = temp[0] < temp[1] and (temp[0] > 0.6 or temp[1] > 0.6)
                 print(f'AI REPORT:{temp}, SNR {self.current_snr_value_db} , Offset {self.current_offset_value_int}')
                 self.signal_found_signal.emit(is_signal_found)
-            time.sleep(0.05)  # 20 Hz
+            time.sleep(0.05)  # Limit to 20 Hz, if it can go faster thats cool but I dont want that.
 
     def start_nn(self):
         """Starts the neural net processing of the worker thread.
@@ -134,9 +134,7 @@ class AnalysisPlot(QWidget):
     """
     def __init__(self):
         super().__init__()
-        # -------------------
-        # Layout & widgets
-        # -------------------
+        # Layout
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
 
@@ -153,7 +151,7 @@ class AnalysisPlot(QWidget):
         self.layout.addWidget(self.start_btn)
         self.layout.addWidget(self.stop_btn)
 
-        #Sliders
+        # Sample Slider
         self.sample_offset_slider = QSlider(QtCore.Qt.Orientation.Horizontal)  # Horizontal slider
         self.sample_offset_slider.setMinimum(-500)            # Minimum value
         self.sample_offset_slider.setMaximum(500)          # Maximum value
@@ -162,6 +160,7 @@ class AnalysisPlot(QWidget):
         self.sample_offset_slider.setTickInterval(10)                  # Tick interval
         self.layout.addWidget(self.sample_offset_slider)
 
+        # SNR Slider
         self.snr_slider = QSlider(QtCore.Qt.Orientation.Horizontal)  # Horizontal slider
         self.snr_slider.setMinimum(-50)            # Minimum value
         self.snr_slider.setMaximum(40)          # Maximum value
@@ -202,7 +201,7 @@ class AnalysisPlot(QWidget):
         Args:
             should_be_green (bool): if true, will set the plot to be green
         """
-        if should_be_green==True:
+        if should_be_green:
             self.plot_widget.setBackground('k')  # green background
             self.curve.setPen('g')
         else:
