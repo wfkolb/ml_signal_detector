@@ -91,7 +91,7 @@ class DataWorker(QThread):
         Returns:
             numpy array: The new test signal as a numpy array
         """
-        new_test_signal = cf.ideal_signal()
+        new_test_signal = cf.generate_ideal_signal()
         new_test_signal = cf.shift_vector(new_test_signal,sample_offset)
         new_test_signal = cf.apply_noise_to_vector(new_test_signal,snr_db,-15)
         return new_test_signal
