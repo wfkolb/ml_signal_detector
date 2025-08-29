@@ -50,8 +50,9 @@ def test(dataloader, model, loss_fn):
         for X, y in train_dataloader:
             X, y = X.to(device), y.to(device)
             pred = model(X)
+            pred_percentages = torch.nn.functional.softmax(pred, dim=0)
             test_loss += loss_fn(pred, y).item()
-            closeValues = torch.isclose(y,pred,0.0,0.1)
+            closeValues = torch.isclose(y,pred_percentages,0.0,0.1)
             correct += closeValues.sum().item()
     test_loss /= num_batches
     correct /= size
